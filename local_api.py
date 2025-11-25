@@ -1,16 +1,13 @@
-import json
 
-import requests
+# Removing following imports as unneeded: json, requests
 
 # TODO: send a GET using the URL http://127.0.0.1:8000
-r = None # Your code here
+r = None  # Your code here
 
 # TODO: print the status code
 # print()
 # TODO: print the welcome message
 # print()
-
-
 
 data = {
     "age": 37,
@@ -30,7 +27,7 @@ data = {
 }
 
 # TODO: send a POST using the data above
-r = None # Your code here
+r = None  # Your code here
 
 # TODO: print the status code
 # print()
