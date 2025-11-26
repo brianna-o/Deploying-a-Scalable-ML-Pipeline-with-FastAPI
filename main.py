@@ -71,7 +71,7 @@ async def post_inference(data: Data):
         "sex",
         "native-country",
     ]
-    
+
     X, _, _, _ = process_data(
         data,
         categorical_features=cat_features,
@@ -81,7 +81,7 @@ async def post_inference(data: Data):
         lb=lb,
     )
     preds = inference(model, X)
-    result =  apply_label(preds)
+    result = apply_label(preds)
 
     # Temporary placeholder so the endpoint is valid until inference is implemented.
     return {"result": result}

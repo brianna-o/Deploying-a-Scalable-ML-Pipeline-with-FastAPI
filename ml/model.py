@@ -1,10 +1,9 @@
 import pickle
-from typing import Any, Dict, List, Tuple
+from typing import Any, Tuple
 from sklearn.metrics import fbeta_score, precision_score, recall_score
 from sklearn.ensemble import RandomForestClassifier
 from ml.data import process_data
 import numpy as np
-import pandas as pd
 
 
 def train_model(
