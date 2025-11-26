@@ -2,8 +2,8 @@ import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-# from ml.data import apply_label, process_data
-# from ml.model import inference, load_model
+from ml.data import apply_label, process_data
+from ml.model import inference, load_model
 
 
 # DO NOT MODIFY
@@ -28,21 +28,23 @@ class Data(BaseModel):
     )
 
 
-path_encoder = None  # TODO: enter the path for the saved encoder
-# encoder = load_model(path_encoder)
+path_encoder = "model/encoder.pkl"  # TODO: enter the path for the saved encoder
+encoder = load_model(path_encoder)
 
-path_model = None  # TODO: enter the path for the saved model
-# model = load_model(path_model)
+path_model = "model/model.pkl"  # TODO: enter the path for the saved model
+model = load_model(path_model)
+
+path_lb = "model/lb.pkl"
+lb = load_model(path_lb)
 
 # TODO: create a RESTful API using FastAPI
-app = FastAPI()  # your code here
+app = FastAPI()
 
 
 # TODO: create a GET on the root giving a welcome message
 @app.get("/")
 async def get_root():
     """Say hello!"""
-    # your code here (modify this return later)
     return {"message": "Welcome to the census income model API"}
 
 
@@ -59,24 +61,27 @@ async def post_inference(data: Data):
     data = pd.DataFrame.from_dict(data)
 
     # TODO: perform model inference here once the model and encoder paths are set.
-    # cat_features = [
-    #     "workclass",
-    #     "education",
-    #     "marital-status",
-    #     "occupation",
-    #     "relationship",
-    #     "race",
-    #     "sex",
-    #     "native-country",
-    # ]
-    # data_processed, _, _, _ = process_data(
-    #     data,
-    #     categorical_features=cat_features,
-    #     training=False,
-    #     encoder=encoder,
-    # )
-    # _inference = inference(model, data_processed)
-    # return {"result": apply_label(_inference)}
+    cat_features = [
+        "workclass",
+        "education",
+        "marital-status",
+        "occupation",
+        "relationship",
+        "race",
+        "sex",
+        "native-country",
+    ]
+    
+    X, _, _, _ = process_data(
+        data,
+        categorical_features=cat_features,
+        label=None,
+        training=False,
+        encoder=encoder,
+        lb=lb,
+    )
+    preds = inference(model, X)
+    result =  apply_label(preds)
 
     # Temporary placeholder so the endpoint is valid until inference is implemented.
-    return {"detail": "Inference not implemented yet"}
+    return {"result": result}

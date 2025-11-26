@@ -1,132 +1,188 @@
-# import pickle
+import pickle
+from typing import Any, Dict, List, Tuple
 from sklearn.metrics import fbeta_score, precision_score, recall_score
+from sklearn.ensemble import RandomForestClassifier
 from ml.data import process_data
-# TODO: add necessary import
+import numpy as np
+import pandas as pd
 
-# Optional: implement hyperparameter tuning.
 
-
-def train_model(X_train, y_train):
+def train_model(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+) -> RandomForestClassifier:
     """
-    Trains a machine learning model and returns it.
+    Train a classification model and return it.
 
-    Inputs
-    ------
-    X_train : np.array
-        Training data.
-    y_train : np.array
-        Labels.
+    Parameters
+    ----------
+    X_train : np.ndarray
+        Training features.
+    y_train : np.ndarray
+        Training labels.
+
     Returns
     -------
-    model
-        Trained machine learning model.
+    RandomForestClassifier
+        A fitted RandomForestClassifier model.
     """
-    # TODO: implement the function
-    pass
+    model = RandomForestClassifier(
+        n_estimators=100,
+        random_state=42,
+        n_jobs=-1,
+    )
+    model.fit(X_train, y_train)
+    return model
 
 
-def compute_model_metrics(y, preds):
+def compute_model_metrics(
+    y: np.ndarray,
+    preds: np.ndarray,
+) -> Tuple[float, float, float]:
     """
-    Validates the trained machine learning model using precision, recall, and F1.
+    Compute precision, recall and F-beta for a set of predictions.
 
-    Inputs
-    ------
-    y : np.array
-        Known labels, binarized.
-    preds : np.array
-        Predicted labels, binarized.
+    Parameters
+    ----------
+    y : np.ndarray
+        True labels.
+    preds : np.ndarray
+        Predicted labels.
+
     Returns
     -------
     precision : float
     recall : float
     fbeta : float
     """
-    fbeta = fbeta_score(y, preds, beta=1, zero_division=1)
     precision = precision_score(y, preds, zero_division=1)
     recall = recall_score(y, preds, zero_division=1)
+    fbeta = fbeta_score(y, preds, beta=1, zero_division=1)
     return precision, recall, fbeta
 
 
-def inference(model, X):
-    """ Run model inferences and return the predictions.
+def inference(
+    model: Any,
+    X: np.ndarray,
+) -> np.ndarray:
+    """
+    Run model inference and return predictions.
 
-    Inputs
-    ------
-    model : ???
-        Trained machine learning model.
-    X : np.array
-        Data used for prediction.
+    Parameters
+    ----------
+    model : Any
+        A trained model implementing `.predict`.
+    X : np.ndarray
+        Features to predict on.
+
     Returns
     -------
-    preds : np.array
-        Predictions from the model.
+    np.ndarray
+        Model predictions.
     """
-    # TODO: implement the function
-    pass
+    return model.predict(X)
 
 
-def save_model(model, path):
-    """ Serializes model to a file.
+def save_model(
+    obj: Any,
+    path: str,
+) -> None:
+    """
+    Save a Python object (model, encoder, etc.) to disk with pickle.
 
-    Inputs
-    ------
-    model
-        Trained machine learning model or OneHotEncoder.
+    Parameters
+    ----------
+    obj : Any
+        Object to save.
     path : str
-        Path to save pickle file.
+        Path to the output file.
     """
-    # TODO: implement the function
-    pass
+    with open(path, "wb") as file:
+        pickle.dump(obj, file)
 
 
-def load_model(path):
-    """ Loads pickle file from `path` and returns it."""
-    # TODO: implement the function
-    pass
+def load_model(path: str) -> Any:
+    """
+    Load a Python object (model, encoder, etc.) from disk.
+
+    Parameters
+    ----------
+    path : str
+        Path to the pickled object.
+
+    Returns
+    -------
+    Any
+        Loaded object.
+    """
+    with open(path, "rb") as file:
+        obj = pickle.load(file)
+    return obj
 
 
 def performance_on_categorical_slice(
-    data, column_name, slice_value, categorical_features, label, encoder, lb, model
+    data,
+    y_true,
+    model,
+    encoder,
+    lb,
+    feature,
+    value,
+    categorical_features,
+    label="salary"
 ):
-    """ Computes the model metrics on a slice of the data specified by a column name and
+    """
+    Compute precision, recall, and F1 for a single slice of the data.
 
-    Processes the data using one hot encoding for the categorical features and a
-    label binarizer for the labels. This can be used in either training or
-    inference/validation.
-
-    Inputs
-    ------
+    Parameters
+    ----------
     data : pd.DataFrame
-        Dataframe containing the features and label. Columns in `categorical_features`
-    column_name : str
-        Column containing the sliced feature.
-    slice_value : str, int, float
-        Value of the slice feature.
-    categorical_features: list
-        List containing the names of the categorical features (default=[])
-    label : str
-        Name of the label column in `X`. If None, then an empty array will be returned
-        for y (default=None)
-    encoder : sklearn.preprocessing._encoders.OneHotEncoder
-        Trained sklearn OneHotEncoder, only used if training=False.
-    lb : sklearn.preprocessing._label.LabelBinarizer
-        Trained sklearn LabelBinarizer, only used if training=False.
-    model : ???
-        Model used for the task.
+        Full dataset (features + label column).
+    y_true : np.ndarray
+        True labels corresponding to `data`.
+    model : Any
+        Trained model.
+    encoder : Any
+        Fitted encoder for categorical features.
+    lb : Any
+        Fitted label binarizer.
+    feature : str
+        Name of the categorical feature to slice on.
+    value : str
+        Specific value of `feature` defining the slice.
+    categorical_features : List[str]
+        List of categorical feature names.
+    label : str, optional
+        Name of the label column, by default "salary".
 
     Returns
     -------
-    precision : float
-    recall : float
-    fbeta : float
-
+    precision: float
+    recall: float
+    fbeta: float
     """
-    # TODO: implement the function
-    X_slice, y_slice, _, _ = process_data(
-        # your code here
-        # for input data, use data in column given as "column_name", with the slice_value
-        # use training = False
+
+    # filters rows in slice
+    mask = data[feature] == value
+    data_slice = data.loc[mask].copy()
+    y_slice = y_true[mask]
+
+    if data_slice.empty:
+        return 0.0, 0.0, 0.0
+
+    # Process the slice using existing encoder/lb
+    X_slice, _, _, _ = process_data(
+        data_slice,
+        categorical_features=categorical_features,
+        label=label,
+        training=False,
+        encoder=encoder,
+        lb=lb,
     )
-    preds = None  # your code here to get prediction on X_slice using the inference function
-    precision, recall, fbeta = compute_model_metrics(y_slice, preds)
+
+    # Run inference on slice
+    preds_slice = inference(model, X_slice)
+
+    # Compute metrics for slice
+    precision, recall, fbeta = compute_model_metrics(y_slice, preds_slice)
     return precision, recall, fbeta
